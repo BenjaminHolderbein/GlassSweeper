@@ -58,6 +58,7 @@ public sealed partial class MainPage : Page
 
         ViewModel.BoardReset += (_, _) => BuildBoard();
         ViewModel.BoardChanged += (_, _) => RefreshBoard();
+        LayoutRoot.SizeChanged += OnLayoutRootSizeChanged;
         Loaded += OnLoaded;
     }
 
@@ -131,24 +132,95 @@ public sealed partial class MainPage : Page
         ResizeWindowToContent();
     }
 
+    // The content size the window should hug, in DIPs. Updated whenever the
+    // board is rebuilt; the window is fitted to it reactively (see ApplyWindowFit).
+    private double _desiredContentWidth;
+    private double _desiredContentHeight;
+
+    // True while a fit is in progress and the window has been resized at least
+    // once — so we center exactly once, after the fit converges, and never on a
+    // new game that didn't change the size.
+    private bool _fitPending;
+
+    // The last client size we asked ResizeClient for, in DIPs. We track the
+    // *request* (not the resulting client size) because ResizeClient applies a
+    // constant vertical offset on this window (its height arg and the reported
+    // client height disagree by the extended title-bar caption, ~31px). The
+    // page area (LayoutRoot) tracks the request 1:1, so correcting the request
+    // by the measured slack converges regardless of that offset.
+    private double _requestedClientWidth;
+    private double _requestedClientHeight;
+    private bool _requestSeeded;
+
     private void ResizeWindowToContent()
     {
-        if (App.Window is not MainWindow window)
+        // Defer until layout settles so ContentRoot's desired size is accurate.
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, () =>
+        {
+            ContentRoot.UpdateLayout();
+            ContentRoot.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Windows.Foundation.Size desired = ContentRoot.DesiredSize;
+
+            // The game-over card needs a minimum width; without this, a small
+            // board would make the window narrower than the card and clip the
+            // stat values.
+            const double minWidthForOverlay = 264;
+            _desiredContentWidth = Math.Max(desired.Width, minWidthForOverlay);
+            _desiredContentHeight = desired.Height;
+
+            ApplyWindowFit();
+        });
+    }
+
+    private void OnLayoutRootSizeChanged(object sender, SizeChangedEventArgs e) => ApplyWindowFit();
+
+    /// <summary>
+    /// Sizes the window so the page area (LayoutRoot) exactly matches the
+    /// content, leaving uniform padding on all sides. Driven by
+    /// LayoutRoot.SizeChanged so it self-corrects: the page area tracks the
+    /// requested client size 1:1, so correcting the request by the measured
+    /// slack converges in a step or two -- no title-bar height has to be guessed,
+    /// and ResizeClient's constant caption offset cancels out. A tolerance guard
+    /// stops the loop once the slack is gone.
+    /// </summary>
+    private void ApplyWindowFit()
+    {
+        if (App.Window is not MainWindow window || _desiredContentHeight <= 0)
         {
             return;
         }
 
-        // Measure the content at its natural size so the window fits it exactly
-        // (no leftover bottom "chin").
-        ContentRoot.UpdateLayout();
-        ContentRoot.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-        Windows.Foundation.Size desired = ContentRoot.DesiredSize;
+        double slackV = LayoutRoot.ActualHeight - _desiredContentHeight;
+        double slackH = LayoutRoot.ActualWidth - _desiredContentWidth;
 
-        // The game-over card needs a minimum width; without this, a small board
-        // would make the window narrower than the card and clip the stat values.
-        const double minWidthForOverlay = 264;
-        double width = Math.Max(desired.Width, minWidthForOverlay);
-        window.SizeToContent(width, desired.Height);
+        if (Math.Abs(slackV) < 1.0 && Math.Abs(slackH) < 1.0)
+        {
+            if (_fitPending)
+            {
+                window.Center();
+                _fitPending = false;
+            }
+
+            return; // Converged — page area matches the content.
+        }
+
+        // Seed the tracked request from the current client size the first time;
+        // thereafter adjust the request itself by the slack. Because the page
+        // area tracks the request 1:1, this converges in a step or two.
+        if (!_requestSeeded)
+        {
+            _requestedClientWidth = window.ClientWidthDip;
+            _requestedClientHeight = window.ClientHeightDip;
+            _requestSeeded = true;
+        }
+
+        _requestedClientWidth -= slackH;
+        _requestedClientHeight -= slackV;
+
+        if (window.SetClientSize(_requestedClientWidth, _requestedClientHeight))
+        {
+            _fitPending = true; // Resized; SizeChanged will re-run until converged.
+        }
     }
 
     private void RefreshBoard()

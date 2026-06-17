@@ -30,40 +30,68 @@ public sealed partial class MainWindow : Window
         {
             presenter.IsResizable = false;
             presenter.IsMaximizable = false;
+
+            // Keep the window's minimum below the smallest board so the
+            // content-hugging resize is never clamped by a default minimum.
+            presenter.PreferredMinimumWidth = 120;
+            presenter.PreferredMinimumHeight = 120;
         }
 
         // Navigate the root frame to the main page on startup.
         RootFrame.Navigate(typeof(MainPage));
     }
 
-    private int _sizedWidth;
-    private int _sizedHeight;
-
     /// <summary>
-    /// Sizes the window's client area to fit the measured content (plus the
-    /// title bar) and centers it — but only when the size actually changes, so
-    /// starting a new game on the same board doesn't move the window.
+    /// Resizes the window's client area to the given size (in DIPs), but only
+    /// when it differs from the <em>actual current</em> client size — so
+    /// re-fitting an already-correct board is a no-op and never moves the
+    /// window. Comparing against reality (not the last request) is important:
+    /// an early request made while the window is still settling may not land at
+    /// the requested size, and the reactive fit must be able to correct it once
+    /// the window has settled. Returns <c>true</c> if a resize happened.
     /// </summary>
-    public void SizeToContent(double contentWidthDip, double contentHeightDip)
+    public bool SetClientSize(double widthDip, double heightDip)
     {
         FrameworkElement? root = Content as FrameworkElement;
         double scale = root?.XamlRoot?.RasterizationScale ?? 1.0;
-        double titleBar = AppTitleBar.ActualHeight > 0 ? AppTitleBar.ActualHeight : 48;
 
-        int w = (int)Math.Ceiling(contentWidthDip * scale);
-        int h = (int)Math.Ceiling((contentHeightDip + titleBar) * scale);
+        int w = (int)Math.Ceiling(widthDip * scale);
+        int h = (int)Math.Ceiling(heightDip * scale);
 
-        if (w == _sizedWidth && h == _sizedHeight)
+        SizeInt32 current = AppWindow.ClientSize;
+        if (Math.Abs(w - current.Width) <= 1 && Math.Abs(h - current.Height) <= 1)
         {
-            return; // Already the right size — don't resize or re-center.
+            return false; // Already the right size — don't resize.
         }
 
-        _sizedWidth = w;
-        _sizedHeight = h;
-
         AppWindow.ResizeClient(new SizeInt32(w, h));
+        return true;
+    }
 
-        // Center on the work area of the display the window is on.
+    /// <summary>Current client width in DIPs.</summary>
+    public double ClientWidthDip
+    {
+        get
+        {
+            FrameworkElement? root = Content as FrameworkElement;
+            double scale = root?.XamlRoot?.RasterizationScale ?? 1.0;
+            return AppWindow.ClientSize.Width / scale;
+        }
+    }
+
+    /// <summary>Current client height (page area + title bar) in DIPs.</summary>
+    public double ClientHeightDip
+    {
+        get
+        {
+            FrameworkElement? root = Content as FrameworkElement;
+            double scale = root?.XamlRoot?.RasterizationScale ?? 1.0;
+            return AppWindow.ClientSize.Height / scale;
+        }
+    }
+
+    public void Center()
+    {
         DisplayArea area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest);
         RectInt32 work = area.WorkArea;
         int x = work.X + ((work.Width - AppWindow.Size.Width) / 2);

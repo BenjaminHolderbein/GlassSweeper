@@ -32,3 +32,6 @@ BundleArtifacts/
 # NuGet
 *.nupkg
 project.lock.json
+
+# Internal AI working notes / handoff docs — not part of the repo
+docs/
