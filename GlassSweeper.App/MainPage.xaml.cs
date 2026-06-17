@@ -164,7 +164,7 @@ public sealed partial class MainPage : Page
             // The game-over card needs a minimum width; without this, a small
             // board would make the window narrower than the card and clip the
             // stat values.
-            const double minWidthForOverlay = 264;
+            const double minWidthForOverlay = 214;
             _desiredContentWidth = Math.Max(desired.Width, minWidthForOverlay);
             _desiredContentHeight = desired.Height;
 

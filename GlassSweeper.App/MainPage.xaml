@@ -187,7 +187,7 @@
 
         <!--  Expanded result card (centered)  -->
         <Border
-            MaxWidth="360"
+            MaxWidth="300"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Padding="0"
@@ -216,7 +216,7 @@
                 </Button>
 
                 <StackPanel
-                    Padding="28,24"
+                    Padding="26,22"
                     HorizontalAlignment="Center"
                     Spacing="12">
                     <TextBlock
@@ -225,7 +225,7 @@
                         Text="{x:Bind ViewModel.OverlayEmoji, Mode=OneWay}" />
                     <TextBlock
                         HorizontalAlignment="Center"
-                        FontSize="22"
+                        FontSize="20"
                         FontWeight="Bold"
                         Text="{x:Bind ViewModel.OverlayTitle, Mode=OneWay}" />
 
@@ -234,7 +234,7 @@
                         Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                         CornerRadius="4"
                         Visibility="{x:Bind BoolToVisibility(ViewModel.ShowStats), Mode=OneWay}">
-                        <StackPanel MinWidth="180" Spacing="6">
+                        <StackPanel MinWidth="150" Spacing="6">
                             <Grid>
                                 <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Time" />
                                 <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{x:Bind ViewModel.ResultTimeText, Mode=OneWay}" />
