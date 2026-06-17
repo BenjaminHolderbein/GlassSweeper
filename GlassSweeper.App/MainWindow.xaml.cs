@@ -34,20 +34,23 @@ public sealed partial class MainWindow : Window
     /// </summary>
     public void ResizeToBoard(int rows, int cols)
     {
-        // Layout constants — must mirror MainPage.xaml / the cell size in code-behind.
-        const double cell = 40;          // per-cell row/column size (DIPs)
-        const double boardChrome = 18;   // board border padding (8*2) + border (1*2)
-        const double pagePadding = 40;   // page padding 20 on each side
-        const double rowSpacing = 16;    // gap between HUD and board
-        const double hudHeight = 80;     // HUD band height
-        const double minClientWidth = 440;
+        // Layout constants — must mirror MainPage.xaml and MainPage cell sizing.
+        const double stride = 30;        // 28pt cell + 2pt gap
+        const double boardChrome = 26;   // nested board borders + padding
+        const double outerPad = 12;      // StackPanel padding on each side
+        const double spacing = 12;       // gap between top bar / HUD / board
+        const double topBar = 32;        // top bar band height
+        const double hud = 40;           // HUD band height
+        const double minContentWidth = 250;
 
         FrameworkElement? root = Content as FrameworkElement;
         double scale = root?.XamlRoot?.RasterizationScale ?? 1.0;
         double titleBar = AppTitleBar.ActualHeight > 0 ? AppTitleBar.ActualHeight : 48;
 
-        double clientWidth = Math.Max((cols * cell) + boardChrome + pagePadding, minClientWidth);
-        double clientHeight = titleBar + hudHeight + rowSpacing + (rows * cell) + boardChrome + pagePadding;
+        double boardW = (cols * stride) + boardChrome;
+        double boardH = (rows * stride) + boardChrome;
+        double clientWidth = Math.Max(boardW, minContentWidth) + (outerPad * 2);
+        double clientHeight = titleBar + (outerPad * 2) + topBar + spacing + hud + spacing + boardH;
 
         int w = (int)Math.Ceiling(clientWidth * scale);
         int h = (int)Math.Ceiling(clientHeight * scale);

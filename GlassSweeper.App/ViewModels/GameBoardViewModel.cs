@@ -7,18 +7,31 @@ namespace GlassSweeper_App.ViewModels;
 
 /// <summary>
 /// Presentation layer over the pure <see cref="GameViewModel"/>. Exposes
-/// bindable HUD state, drives the game clock with a UI-thread timer, and
-/// surfaces two events the view uses to keep the board in sync:
-/// <see cref="BoardReset"/> (dimensions changed — rebuild the grid) and
-/// <see cref="BoardChanged"/> (cell/HUD state changed — refresh visuals).
+/// bindable HUD/overlay state, drives the game clock, persists settings and
+/// stats, and plays win/loss sounds Ã¢â‚¬â€ mirroring SwiftSweeper's ContentView.
 /// </summary>
 public partial class GameBoardViewModel : ObservableObject
 {
-    private readonly GameViewModel _game = new(GameViewModel.Difficulty.Easy);
+    private readonly GameViewModel _game;
     private readonly DispatcherQueueTimer _timer;
+    private readonly GameSettings _settings;
+    private GameState _lastState = GameState.Playing;
+    private bool _isNewBest;
 
     public GameBoardViewModel()
     {
+        _settings = SettingsService.Load();
+
+        GameViewModel.Difficulty difficulty = ParseDifficulty(_settings.Difficulty);
+        _game = new GameViewModel(difficulty);
+        if (difficulty == GameViewModel.Difficulty.Custom)
+        {
+            _game.SetCustom(_settings.CustomRows, _settings.CustomCols, _settings.CustomMines);
+        }
+
+        _muted = _settings.Muted;
+        _difficultyLabel = GameViewModel.Label(_game.CurrentDifficulty);
+
         _game.Changed += (_, _) => OnGameChanged();
 
         _timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -29,19 +42,26 @@ public partial class GameBoardViewModel : ObservableObject
         OnGameChanged();
     }
 
-    /// <summary>Dimensions changed — the view should rebuild the cell grid.</summary>
+    /// <summary>Dimensions changed Ã¢â‚¬â€ the view should rebuild the cell grid.</summary>
     public event EventHandler? BoardReset;
 
-    /// <summary>Cell or HUD state changed — the view should refresh visuals.</summary>
+    /// <summary>Cell or HUD state changed Ã¢â‚¬â€ the view should refresh visuals.</summary>
     public event EventHandler? BoardChanged;
 
-    /// <summary>The underlying game model, for the view to read cell state.</summary>
     public GameViewModel Game => _game;
 
     public int Rows => _game.Rows;
 
     public int Cols => _game.Cols;
 
+    // Saved custom-board dimensions, used to pre-fill the custom dialog.
+    public int CustomRows => _settings.CustomRows;
+
+    public int CustomCols => _settings.CustomCols;
+
+    public int CustomMines => _settings.CustomMines;
+
+    // ---- HUD ----
     [ObservableProperty]
     private string _minesRemainingText = "010";
 
@@ -49,8 +69,17 @@ public partial class GameBoardViewModel : ObservableObject
     private string _timeText = "000";
 
     [ObservableProperty]
-    private string _faceGlyph = "\U0001F642"; // 🙂
+    private string _faceGlyph = "\U0001F642"; // Ã°Å¸â„¢â€š
 
+    [ObservableProperty]
+    private string _difficultyLabel = "Easy";
+
+    [ObservableProperty]
+    private bool _muted;
+    // Segoe Fluent Icons: Mute (E74F) / Volume (E767).
+    public string MuteGlyph => Muted ? "" : "";
+
+    // ---- Game-over overlay ----
     [ObservableProperty]
     private bool _isGameOver;
 
@@ -58,20 +87,61 @@ public partial class GameBoardViewModel : ObservableObject
     private bool _isWin;
 
     [ObservableProperty]
+    private bool _gameOverCollapsed;
+
+    [ObservableProperty]
+    private string _overlayEmoji = string.Empty;
+
+    [ObservableProperty]
     private string _overlayTitle = string.Empty;
 
     [ObservableProperty]
-    private string _overlaySubtitle = string.Empty;
+    private string _resultButtonText = "Play again";
 
     [ObservableProperty]
-    private string _difficultyLabel = "Easy";
+    private bool _showStats;
 
-    public void Reveal(int row, int col) => _game.CellTapped(row, col);
+    [ObservableProperty]
+    private bool _showNewBest;
 
-    public void Flag(int row, int col) => _game.CellFlagged(row, col);
+    [ObservableProperty]
+    private string _resultTimeText = "0s";
 
-    public void Chord(int row, int col) => _game.Chord(row, col);
+    [ObservableProperty]
+    private string _bestTimeText = "Ã¢â‚¬â€";
 
+    [ObservableProperty]
+    private string _winsText = "0 / 0";
+
+    [ObservableProperty]
+    private string _winRateText = "Ã¢â‚¬â€";
+
+    [ObservableProperty]
+    private string _pillLabel = "Won";
+
+    [ObservableProperty]
+    private string _pillTimeText = "0s";
+
+    // Visibility helpers (true when the overlay is shown in that mode).
+    public bool ShowExpandedOverlay => IsGameOver && !GameOverCollapsed;
+
+    public bool ShowCollapsedPill => IsGameOver && GameOverCollapsed;
+
+    partial void OnIsGameOverChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowExpandedOverlay));
+        OnPropertyChanged(nameof(ShowCollapsedPill));
+    }
+
+    partial void OnGameOverCollapsedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowExpandedOverlay));
+        OnPropertyChanged(nameof(ShowCollapsedPill));
+    }
+
+    partial void OnMutedChanged(bool value) => OnPropertyChanged(nameof(MuteGlyph));
+
+    // ---- Commands / actions ----
     [RelayCommand]
     public void NewGame()
     {
@@ -79,15 +149,30 @@ public partial class GameBoardViewModel : ObservableObject
         BoardReset?.Invoke(this, EventArgs.Empty);
     }
 
+    [RelayCommand]
+    public void ToggleMute()
+    {
+        Muted = !Muted;
+        _settings.Muted = Muted;
+        SettingsService.Save(_settings);
+    }
+
+    public void ToggleGameOverCollapse() => GameOverCollapsed = !GameOverCollapsed;
+
+    public void Reveal(int row, int col) => _game.CellTapped(row, col);
+
+    public void Flag(int row, int col) => _game.CellFlagged(row, col);
+
+    public void Chord(int row, int col) => _game.Chord(row, col);
+
     public void ApplyDifficulty(GameViewModel.Difficulty difficulty)
     {
-        bool dimsWillChange = difficulty != _game.CurrentDifficulty;
+        bool willChange = difficulty != _game.CurrentDifficulty;
         _game.SetDifficulty(difficulty);
         DifficultyLabel = GameViewModel.Label(_game.CurrentDifficulty);
-
-        // SetDifficulty no-ops (no reset) when the difficulty is unchanged;
-        // only rebuild the grid when it actually changed.
-        if (dimsWillChange)
+        _settings.Difficulty = _game.CurrentDifficulty.ToString();
+        SettingsService.Save(_settings);
+        if (willChange)
         {
             BoardReset?.Invoke(this, EventArgs.Empty);
         }
@@ -97,49 +182,113 @@ public partial class GameBoardViewModel : ObservableObject
     {
         _game.SetCustom(rows, cols, mines);
         DifficultyLabel = GameViewModel.Label(_game.CurrentDifficulty);
+        _settings.Difficulty = _game.CurrentDifficulty.ToString();
+        _settings.CustomRows = _game.CustomRows;
+        _settings.CustomCols = _game.CustomCols;
+        _settings.CustomMines = _game.CustomMines;
+        SettingsService.Save(_settings);
         BoardReset?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnGameChanged()
     {
-        int remaining = _game.MineCount - _game.FlagsPlaced;
-        MinesRemainingText = Format3(remaining);
-        TimeText = Format3(Math.Min(_game.ElapsedTime, 999));
+        GameState state = _game.GameState;
 
-        switch (_game.GameState)
+        int remaining = Math.Clamp(_game.MineCount - _game.FlagsPlaced, 0, 999);
+        MinesRemainingText = remaining.ToString("D3");
+        TimeText = Math.Min(_game.ElapsedTime, 999).ToString("D3");
+
+        // Record stats once, on the transition out of Playing.
+        if (_lastState == GameState.Playing && state != GameState.Playing)
+        {
+            _settings.TotalGames += 1;
+            if (state == GameState.Won)
+            {
+                _settings.TotalWins += 1;
+                int t = _game.ElapsedTime;
+                _isNewBest = _settings.BestTime == 0 || t < _settings.BestTime;
+                if (_isNewBest)
+                {
+                    _settings.BestTime = t;
+                }
+
+                if (!Muted)
+                {
+                    Sound.Win();
+                }
+            }
+            else
+            {
+                _isNewBest = false;
+                if (!Muted)
+                {
+                    Sound.Loss();
+                }
+            }
+
+            SettingsService.Save(_settings);
+            GameOverCollapsed = false;
+        }
+
+        _lastState = state;
+
+        switch (state)
         {
             case GameState.Playing:
-                FaceGlyph = "\U0001F642"; // 🙂
+                FaceGlyph = "\U0001F642"; // Ã°Å¸â„¢â€š
                 IsGameOver = false;
                 break;
             case GameState.Won:
-                FaceGlyph = "\U0001F60E"; // 😎
-                IsGameOver = true;
+                FaceGlyph = "\U0001F60E"; // Ã°Å¸ËœÅ½
                 IsWin = true;
-                OverlayTitle = "You Win!";
-                OverlaySubtitle = $"Cleared in {_game.ElapsedTime}s";
+                UpdateOverlayText(won: true);
+                IsGameOver = true;
                 break;
             case GameState.Lost:
-                FaceGlyph = "\U0001F635"; // 😵
-                IsGameOver = true;
+                FaceGlyph = "\U0001F635"; // Ã°Å¸ËœÂµ
                 IsWin = false;
-                OverlayTitle = "Boom!";
-                OverlaySubtitle = "You hit a mine.";
+                UpdateOverlayText(won: false);
+                IsGameOver = true;
                 break;
         }
 
         BoardChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static string Format3(int value)
+    private void UpdateOverlayText(bool won)
     {
-        if (value < 0)
-        {
-            // Classic counters show a leading minus, e.g. "-05".
-            int magnitude = Math.Min(-value, 99);
-            return "-" + magnitude.ToString("D2");
-        }
+        OverlayEmoji = won ? "\U0001F389" : "\U0001F4A5"; // Ã°Å¸Å½â€° / Ã°Å¸â€™Â¥
+        OverlayTitle = won ? "You won" : "Boom";
+        ResultButtonText = won ? "Play again" : "Try again";
+        PillLabel = won ? "Won" : "Lost";
+        PillTimeText = FormatTime(_game.ElapsedTime);
 
-        return value.ToString("D3");
+        ShowStats = won;
+        if (won)
+        {
+            ResultTimeText = FormatTime(_game.ElapsedTime);
+            BestTimeText = _settings.BestTime > 0 ? FormatTime(_settings.BestTime) : "Ã¢â‚¬â€";
+            WinsText = $"{_settings.TotalWins} / {_settings.TotalGames}";
+            WinRateText = _settings.TotalGames > 0
+                ? $"{(int)Math.Round(100.0 * _settings.TotalWins / _settings.TotalGames)}%"
+                : "Ã¢â‚¬â€";
+            ShowNewBest = _isNewBest;
+        }
+        else
+        {
+            ShowNewBest = false;
+        }
     }
+
+    private static string FormatTime(int seconds)
+    {
+        int m = seconds / 60;
+        int s = seconds % 60;
+        return m > 0 ? $"{m}:{s:D2}" : $"{s}s";
+    }
+
+    private static GameViewModel.Difficulty ParseDifficulty(string value) =>
+        Enum.TryParse(value, ignoreCase: true, out GameViewModel.Difficulty d)
+            ? d
+            : GameViewModel.Difficulty.Easy;
 }

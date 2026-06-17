@@ -8,144 +8,274 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="20" RowSpacing="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="R" Modifiers="Control" Invoked="OnAccelNewGame" />
+        <KeyboardAccelerator Key="R" Invoked="OnAccelNewGame" />
+        <KeyboardAccelerator Key="B" Invoked="OnAccelPeek" />
+        <KeyboardAccelerator Key="Number1" Modifiers="Control" Invoked="OnAccelEasy" />
+        <KeyboardAccelerator Key="Number2" Modifiers="Control" Invoked="OnAccelMedium" />
+        <KeyboardAccelerator Key="Number3" Modifiers="Control" Invoked="OnAccelHard" />
+        <KeyboardAccelerator Key="Number0" Modifiers="Control" Invoked="OnAccelCustom" />
+        <KeyboardAccelerator Key="M" Modifiers="Control" Invoked="OnAccelMute" />
+    </Page.KeyboardAccelerators>
 
-        <!--  HUD  -->
-        <Border
-            Grid.Row="0"
-            Padding="16,10"
-            HorizontalAlignment="Stretch"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="12">
-            <Grid>
+    <Grid
+        x:Name="LayoutRoot"
+        IsTabStop="True"
+        KeyDown="OnLayoutKeyDown"
+        UseSystemFocusVisuals="False">
+
+        <!--  Content: top bar + HUD + board, sized to content and centered  -->
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Padding="12"
+            Spacing="12">
+
+            <!--  Top bar: difficulty (left) + mute (right)  -->
+            <Grid Height="32">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <DropDownButton
+                    Grid.Column="0"
+                    Height="32"
+                    Padding="14,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    CornerRadius="{ThemeResource ControlCornerRadius}">
+                    <DropDownButton.Content>
+                        <TextBlock
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind ViewModel.DifficultyLabel, Mode=OneWay}" />
+                    </DropDownButton.Content>
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="Bottom">
+                            <MenuFlyoutItem Click="OnDifficultyEasy" Text="Easy — 9×9, 10 mines" />
+                            <MenuFlyoutItem Click="OnDifficultyMedium" Text="Medium — 13×13, 25 mines" />
+                            <MenuFlyoutItem Click="OnDifficultyHard" Text="Hard — 16×16, 45 mines" />
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Click="OnDifficultyCustom" Text="Custom…" />
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+
+                <Button
+                    Grid.Column="1"
+                    Width="32"
+                    Height="32"
+                    Padding="0"
+                    Click="OnMuteClicked"
+                    CornerRadius="{ThemeResource ControlCornerRadius}"
+                    ToolTipService.ToolTip="Mute / unmute (Ctrl+M)"
+                    AutomationProperties.Name="Mute or unmute sounds">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                        FontSize="14"
+                        Glyph="{x:Bind ViewModel.MuteGlyph, Mode=OneWay}" />
+                </Button>
+            </Grid>
+
+            <!--  HUD: mines (left) · face (center) · timer (right)  -->
+            <Grid Height="40">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!--  Mines remaining  -->
-                <StackPanel
-                    Grid.Column="0"
-                    Orientation="Horizontal"
-                    Spacing="8"
-                    VerticalAlignment="Center">
-                    <TextBlock FontSize="20" Text="&#x1F6A9;" />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontFamily="Consolas"
-                        FontSize="24"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                        Text="{x:Bind ViewModel.MinesRemainingText, Mode=OneWay}" />
-                </StackPanel>
-
-                <!--  Face / New Game + difficulty  -->
-                <StackPanel
-                    Grid.Column="1"
-                    Orientation="Horizontal"
-                    Spacing="12"
-                    VerticalAlignment="Center">
-                    <Button
-                        Width="56"
-                        Height="56"
-                        Padding="0"
-                        Click="OnFaceClicked"
-                        CornerRadius="12"
-                        ToolTipService.ToolTip="New game">
-                        <TextBlock FontSize="26" Text="{x:Bind ViewModel.FaceGlyph, Mode=OneWay}" />
-                    </Button>
-                    <DropDownButton
-                        Height="40"
-                        VerticalAlignment="Center"
-                        CornerRadius="8">
-                        <DropDownButton.Content>
-                            <TextBlock Text="{x:Bind ViewModel.DifficultyLabel, Mode=OneWay}" />
-                        </DropDownButton.Content>
-                        <DropDownButton.Flyout>
-                            <MenuFlyout Placement="Bottom">
-                                <MenuFlyoutItem Click="OnDifficultyEasy" Text="Easy — 9×9, 10 mines" />
-                                <MenuFlyoutItem Click="OnDifficultyMedium" Text="Medium — 13×13, 25 mines" />
-                                <MenuFlyoutItem Click="OnDifficultyHard" Text="Hard — 16×16, 45 mines" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem Click="OnDifficultyCustom" Text="Custom…" />
-                            </MenuFlyout>
-                        </DropDownButton.Flyout>
-                    </DropDownButton>
-                </StackPanel>
-
-                <!--  Timer  -->
-                <StackPanel
-                    Grid.Column="2"
-                    Orientation="Horizontal"
-                    Spacing="8"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Center">
-                    <TextBlock FontSize="20" Text="&#x23F1;" />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontFamily="Consolas"
-                        FontSize="24"
-                        FontWeight="SemiBold"
-                        Text="{x:Bind ViewModel.TimeText, Mode=OneWay}" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!--  Board + overlay  -->
-        <Grid Grid.Row="1">
-            <Viewbox
-                MaxWidth="900"
-                MaxHeight="900"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Stretch="Uniform"
-                StretchDirection="Both">
                 <Border
-                    Padding="8"
+                    Grid.Column="0"
+                    Height="40"
+                    Padding="12,0"
+                    HorizontalAlignment="Left"
                     Background="{ThemeResource LayerFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
-                    CornerRadius="14">
-                    <Grid x:Name="BoardHost" />
+                    CornerRadius="{ThemeResource ControlCornerRadius}"
+                    AutomationProperties.Name="Mines remaining">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="14"
+                            Foreground="#F25C5C"
+                            Text="&#x1F6A9;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontFamily="Consolas"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind ViewModel.MinesRemainingText, Mode=OneWay}" />
+                    </StackPanel>
                 </Border>
-            </Viewbox>
 
-            <!--  Game-over overlay  -->
+                <Button
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Padding="0"
+                    Click="OnFaceClicked"
+                    CornerRadius="{ThemeResource ControlCornerRadius}"
+                    ToolTipService.ToolTip="New game (R)"
+                    AutomationProperties.Name="New game">
+                    <TextBlock FontSize="20" Text="{x:Bind ViewModel.FaceGlyph, Mode=OneWay}" />
+                </Button>
+
+                <Border
+                    Grid.Column="2"
+                    Height="40"
+                    Padding="12,0"
+                    HorizontalAlignment="Right"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{ThemeResource ControlCornerRadius}"
+                    AutomationProperties.Name="Elapsed time">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="14"
+                            Foreground="#73C7FF"
+                            Text="&#x23F1;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontFamily="Consolas"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Text="{x:Bind ViewModel.TimeText, Mode=OneWay}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!--  Board  -->
             <Border
-                x:Name="OverlayRoot"
-                Padding="40,28"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                Padding="6"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
-                CornerRadius="16"
-                Visibility="{x:Bind BoolToVisibility(ViewModel.IsGameOver), Mode=OneWay}">
-                <StackPanel Spacing="10" HorizontalAlignment="Center">
+                CornerRadius="{ThemeResource OverlayCornerRadius}">
+                <Border Padding="6" Background="#47000000" CornerRadius="4">
+                    <Grid x:Name="BoardHost" />
+                </Border>
+            </Border>
+        </StackPanel>
+
+        <!--  Collapsed result pill (top) — tap to expand  -->
+        <Border
+            VerticalAlignment="Top"
+            HorizontalAlignment="Center"
+            Margin="0,18,0,0"
+            Padding="14,7"
+            Background="{ThemeResource AccentControlElevationBorderBrush}"
+            CornerRadius="{ThemeResource ControlCornerRadius}"
+            Tapped="OnPillTapped"
+            ToolTipService.ToolTip="Show summary (B)"
+            Visibility="{x:Bind BoolToVisibility(ViewModel.ShowCollapsedPill), Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <TextBlock FontSize="15" Text="{x:Bind ViewModel.OverlayEmoji, Mode=OneWay}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontWeight="SemiBold"
+                    Text="{x:Bind ViewModel.PillLabel, Mode=OneWay}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.PillTimeText, Mode=OneWay}" />
+                <FontIcon
+                    FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                    FontSize="10"
+                    Glyph="&#xE70D;" />
+            </StackPanel>
+        </Border>
+
+        <!--  Expanded result card (centered)  -->
+        <Border
+            MaxWidth="360"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Padding="28,24"
+            Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="{ThemeResource OverlayCornerRadius}"
+            Visibility="{x:Bind BoolToVisibility(ViewModel.ShowExpandedOverlay), Mode=OneWay}">
+            <Grid>
+                <Button
+                    Width="28"
+                    Height="28"
+                    Padding="0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Click="OnCollapseOverlay"
+                    CornerRadius="{ThemeResource ControlCornerRadius}"
+                    ToolTipService.ToolTip="Peek at the board (B)"
+                    AutomationProperties.Name="Peek at the board">
+                    <FontIcon
+                        FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                        FontSize="10"
+                        Glyph="&#xE70E;" />
+                </Button>
+
+                <StackPanel HorizontalAlignment="Center" Spacing="12">
                     <TextBlock
                         HorizontalAlignment="Center"
-                        FontSize="34"
+                        FontSize="36"
+                        Text="{x:Bind ViewModel.OverlayEmoji, Mode=OneWay}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        FontSize="22"
                         FontWeight="Bold"
                         Text="{x:Bind ViewModel.OverlayTitle, Mode=OneWay}" />
-                    <TextBlock
+
+                    <Border
+                        Padding="14,10"
+                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="4"
+                        Visibility="{x:Bind BoolToVisibility(ViewModel.ShowStats), Mode=OneWay}">
+                        <StackPanel MinWidth="180" Spacing="6">
+                            <Grid>
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Time" />
+                                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{x:Bind ViewModel.ResultTimeText, Mode=OneWay}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Best" />
+                                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{x:Bind ViewModel.BestTimeText, Mode=OneWay}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Total wins" />
+                                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{x:Bind ViewModel.WinsText, Mode=OneWay}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Win rate" />
+                                <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold" Text="{x:Bind ViewModel.WinRateText, Mode=OneWay}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel
+                        Orientation="Horizontal"
                         HorizontalAlignment="Center"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Text="{x:Bind ViewModel.OverlaySubtitle, Mode=OneWay}" />
+                        Spacing="6"
+                        Visibility="{x:Bind BoolToVisibility(ViewModel.ShowNewBest), Mode=OneWay}">
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons,Segoe MDL2 Assets"
+                            FontSize="13"
+                            Foreground="#FFD24D"
+                            Glyph="&#xE735;" />
+                        <TextBlock
+                            FontWeight="SemiBold"
+                            Foreground="#FFD24D"
+                            Text="New best time" />
+                    </StackPanel>
+
                     <Button
-                        Margin="0,8,0,0"
+                        Margin="0,4,0,0"
                         HorizontalAlignment="Center"
                         Click="OnFaceClicked"
-                        Content="Play again"
+                        Content="{x:Bind ViewModel.ResultButtonText, Mode=OneWay}"
                         Style="{ThemeResource AccentButtonStyle}" />
                 </StackPanel>
-            </Border>
-        </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </Page>
