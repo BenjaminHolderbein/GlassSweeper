@@ -8,7 +8,7 @@ namespace GlassSweeper_App.ViewModels;
 /// <summary>
 /// Presentation layer over the pure <see cref="GameViewModel"/>. Exposes
 /// bindable HUD/overlay state, drives the game clock, persists settings and
-/// stats, and plays win/loss sounds Ã¢â‚¬â€ mirroring SwiftSweeper's ContentView.
+/// stats, and plays win/loss sounds  mirroring SwiftSweeper's ContentView.
 /// </summary>
 public partial class GameBoardViewModel : ObservableObject
 {
@@ -42,10 +42,10 @@ public partial class GameBoardViewModel : ObservableObject
         OnGameChanged();
     }
 
-    /// <summary>Dimensions changed Ã¢â‚¬â€ the view should rebuild the cell grid.</summary>
+    /// <summary>Dimensions changed  the view should rebuild the cell grid.</summary>
     public event EventHandler? BoardReset;
 
-    /// <summary>Cell or HUD state changed Ã¢â‚¬â€ the view should refresh visuals.</summary>
+    /// <summary>Cell or HUD state changed  the view should refresh visuals.</summary>
     public event EventHandler? BoardChanged;
 
     public GameViewModel Game => _game;
@@ -69,7 +69,7 @@ public partial class GameBoardViewModel : ObservableObject
     private string _timeText = "000";
 
     [ObservableProperty]
-    private string _faceGlyph = "\U0001F642"; // Ã°Å¸â„¢â€š
+    private string _faceGlyph = "\U0001F642"; // 
 
     [ObservableProperty]
     private string _difficultyLabel = "Easy";
@@ -108,13 +108,13 @@ public partial class GameBoardViewModel : ObservableObject
     private string _resultTimeText = "0s";
 
     [ObservableProperty]
-    private string _bestTimeText = "Ã¢â‚¬â€";
+    private string _bestTimeText = "--";
 
     [ObservableProperty]
     private string _winsText = "0 / 0";
 
     [ObservableProperty]
-    private string _winRateText = "Ã¢â‚¬â€";
+    private string _winRateText = "--";
 
     [ObservableProperty]
     private string _pillLabel = "Won";
@@ -235,17 +235,17 @@ public partial class GameBoardViewModel : ObservableObject
         switch (state)
         {
             case GameState.Playing:
-                FaceGlyph = "\U0001F642"; // Ã°Å¸â„¢â€š
+                FaceGlyph = "\U0001F642"; // 
                 IsGameOver = false;
                 break;
             case GameState.Won:
-                FaceGlyph = "\U0001F60E"; // Ã°Å¸ËœÅ½
+                FaceGlyph = "\U0001F60E"; // 
                 IsWin = true;
                 UpdateOverlayText(won: true);
                 IsGameOver = true;
                 break;
             case GameState.Lost:
-                FaceGlyph = "\U0001F635"; // Ã°Å¸ËœÂµ
+                FaceGlyph = "\U0001F635"; // 
                 IsWin = false;
                 UpdateOverlayText(won: false);
                 IsGameOver = true;
@@ -257,7 +257,7 @@ public partial class GameBoardViewModel : ObservableObject
 
     private void UpdateOverlayText(bool won)
     {
-        OverlayEmoji = won ? "\U0001F389" : "\U0001F4A5"; // Ã°Å¸Å½â€° / Ã°Å¸â€™Â¥
+        OverlayEmoji = won ? "\U0001F389" : "\U0001F4A5"; //  / 
         OverlayTitle = won ? "You won" : "Boom";
         ResultButtonText = won ? "Play again" : "Try again";
         PillLabel = won ? "Won" : "Lost";
@@ -267,11 +267,11 @@ public partial class GameBoardViewModel : ObservableObject
         if (won)
         {
             ResultTimeText = FormatTime(_game.ElapsedTime);
-            BestTimeText = _settings.BestTime > 0 ? FormatTime(_settings.BestTime) : "Ã¢â‚¬â€";
+            BestTimeText = _settings.BestTime > 0 ? FormatTime(_settings.BestTime) : "--";
             WinsText = $"{_settings.TotalWins} / {_settings.TotalGames}";
             WinRateText = _settings.TotalGames > 0
                 ? $"{(int)Math.Round(100.0 * _settings.TotalWins / _settings.TotalGames)}%"
-                : "Ã¢â‚¬â€";
+                : "--";
             ShowNewBest = _isNewBest;
         }
         else

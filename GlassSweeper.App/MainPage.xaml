@@ -27,6 +27,7 @@
 
         <!--  Content: top bar + HUD + board, sized to content and centered  -->
         <StackPanel
+            x:Name="ContentRoot"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Padding="12"
@@ -147,16 +148,12 @@
                 </Border>
             </Grid>
 
-            <!--  Board  -->
+            <!--  Board: a single recessed surface  -->
             <Border
                 Padding="6"
-                Background="{ThemeResource LayerFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
+                Background="{ThemeResource ControlFillColorDefaultBrush}"
                 CornerRadius="{ThemeResource OverlayCornerRadius}">
-                <Border Padding="6" Background="#47000000" CornerRadius="4">
-                    <Grid x:Name="BoardHost" />
-                </Border>
+                <Grid x:Name="BoardHost" />
             </Border>
         </StackPanel>
 
@@ -193,7 +190,7 @@
             MaxWidth="360"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            Padding="28,24"
+            Padding="0"
             Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1"
@@ -204,6 +201,8 @@
                     Width="28"
                     Height="28"
                     Padding="0"
+                    Margin="0,8,8,0"
+                    Canvas.ZIndex="1"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Click="OnCollapseOverlay"
@@ -216,7 +215,10 @@
                         Glyph="&#xE70E;" />
                 </Button>
 
-                <StackPanel HorizontalAlignment="Center" Spacing="12">
+                <StackPanel
+                    Padding="28,24"
+                    HorizontalAlignment="Center"
+                    Spacing="12">
                     <TextBlock
                         HorizontalAlignment="Center"
                         FontSize="36"

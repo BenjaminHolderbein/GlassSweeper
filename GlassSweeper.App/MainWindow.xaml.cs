@@ -27,33 +27,30 @@ public sealed partial class MainWindow : Window
         RootFrame.Navigate(typeof(MainPage));
     }
 
-    /// <summary>
-    /// Sizes the window so it hugs the board (plus the title bar, HUD, and
-    /// padding) rather than floating in a large window, and centers it on the
-    /// current display. Called whenever the board is (re)built.
-    /// </summary>
-    public void ResizeToBoard(int rows, int cols)
-    {
-        // Layout constants — must mirror MainPage.xaml and MainPage cell sizing.
-        const double stride = 30;        // 28pt cell + 2pt gap
-        const double boardChrome = 26;   // nested board borders + padding
-        const double outerPad = 12;      // StackPanel padding on each side
-        const double spacing = 12;       // gap between top bar / HUD / board
-        const double topBar = 32;        // top bar band height
-        const double hud = 40;           // HUD band height
-        const double minContentWidth = 250;
+    private int _sizedWidth;
+    private int _sizedHeight;
 
+    /// <summary>
+    /// Sizes the window's client area to fit the measured content (plus the
+    /// title bar) and centers it — but only when the size actually changes, so
+    /// starting a new game on the same board doesn't move the window.
+    /// </summary>
+    public void SizeToContent(double contentWidthDip, double contentHeightDip)
+    {
         FrameworkElement? root = Content as FrameworkElement;
         double scale = root?.XamlRoot?.RasterizationScale ?? 1.0;
         double titleBar = AppTitleBar.ActualHeight > 0 ? AppTitleBar.ActualHeight : 48;
 
-        double boardW = (cols * stride) + boardChrome;
-        double boardH = (rows * stride) + boardChrome;
-        double clientWidth = Math.Max(boardW, minContentWidth) + (outerPad * 2);
-        double clientHeight = titleBar + (outerPad * 2) + topBar + spacing + hud + spacing + boardH;
+        int w = (int)Math.Ceiling(contentWidthDip * scale);
+        int h = (int)Math.Ceiling((contentHeightDip + titleBar) * scale);
 
-        int w = (int)Math.Ceiling(clientWidth * scale);
-        int h = (int)Math.Ceiling(clientHeight * scale);
+        if (w == _sizedWidth && h == _sizedHeight)
+        {
+            return; // Already the right size — don't resize or re-center.
+        }
+
+        _sizedWidth = w;
+        _sizedHeight = h;
 
         AppWindow.ResizeClient(new SizeInt32(w, h));
 

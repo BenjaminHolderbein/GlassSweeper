@@ -128,11 +128,27 @@ public sealed partial class MainPage : Page
 
         RefreshBoard();
         LayoutRoot.Focus(FocusState.Programmatic);
+        ResizeWindowToContent();
+    }
 
-        if (App.Window is MainWindow window)
+    private void ResizeWindowToContent()
+    {
+        if (App.Window is not MainWindow window)
         {
-            window.ResizeToBoard(rows, cols);
+            return;
         }
+
+        // Measure the content at its natural size so the window fits it exactly
+        // (no leftover bottom "chin").
+        ContentRoot.UpdateLayout();
+        ContentRoot.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        Windows.Foundation.Size desired = ContentRoot.DesiredSize;
+
+        // The game-over card needs a minimum width; without this, a small board
+        // would make the window narrower than the card and clip the stat values.
+        const double minWidthForOverlay = 264;
+        double width = Math.Max(desired.Width, minWidthForOverlay);
+        window.SizeToContent(width, desired.Height);
     }
 
     private void RefreshBoard()
