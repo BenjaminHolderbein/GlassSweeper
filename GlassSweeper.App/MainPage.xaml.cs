@@ -103,6 +103,12 @@ public sealed partial class MainPage : Page
         }
 
         RefreshBoard();
+
+        // Snap the window to fit the new board dimensions.
+        if (App.Window is MainWindow window)
+        {
+            window.ResizeToBoard(rows, cols);
+        }
     }
 
     private void RefreshBoard()
