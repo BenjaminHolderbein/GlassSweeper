@@ -1,0 +1,34 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]64/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# Test results
+[Tt]est[Rr]esults/
+
+# MSIX / packaging artifacts
+AppPackages/
+BundleArtifacts/
+*.appx
+*.msix
+*.appxbundle
+*.appxupload
+
+# Signing certificates — never commit these
+*.pfx
+*.cer
+*.snk
+
+# NuGet
+*.nupkg
+project.lock.json

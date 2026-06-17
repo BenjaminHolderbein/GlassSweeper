@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "GlassSweeper.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "GlassSweeper.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
