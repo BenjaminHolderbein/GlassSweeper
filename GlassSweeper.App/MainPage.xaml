@@ -148,9 +148,12 @@
                 </Border>
             </Grid>
 
-            <!--  Board: a single recessed surface  -->
+            <!--  Board: a single recessed surface that hugs the cells. Centered
+                  so on a small board (narrower than the HUD/top bar) the surface
+                  wraps the grid snugly instead of stretching with empty space.  -->
             <Border
                 Padding="6"
+                HorizontalAlignment="Center"
                 Background="{ThemeResource ControlFillColorDefaultBrush}"
                 CornerRadius="{ThemeResource OverlayCornerRadius}">
                 <Grid x:Name="BoardHost" />
