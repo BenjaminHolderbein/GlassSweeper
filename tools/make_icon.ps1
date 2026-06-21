@@ -159,10 +159,12 @@ $masterFlag = Render-FlagOnly 1024
 (Compose-Centered $masterIcon 300 300 1.0) | ForEach-Object { Save-Png $_ "$assets\Square150x150Logo.scale-200.png"; $_.Dispose() }
 (Compose-Centered $masterIcon 50 50 1.0)   | ForEach-Object { Save-Png $_ "$assets\StoreLogo.png"; $_.Dispose() }
 
-# --- Unplated / lock-screen (flag only, transparent) ---
-(Compose-Centered $masterFlag 24 24 1.0) | ForEach-Object { Save-Png $_ "$assets\Square44x44Logo.targetsize-24_altform-unplated.png"; $_.Dispose() }
-(Compose-Centered $masterFlag 48 48 1.0) | ForEach-Object { Save-Png $_ "$assets\Square44x44Logo.targetsize-48_altform-lightunplated.png"; $_.Dispose() }
-(Compose-Centered $masterFlag 48 48 1.0) | ForEach-Object { Save-Png $_ "$assets\LockScreenLogo.scale-200.png"; $_.Dispose() }
+# --- Taskbar / lock-screen variants. Windows uses these "unplated" forms in the
+#     taskbar and Start; render the full rounded-gradient icon (not a bare flag)
+#     so the icon always has its background and rounded corners. ---
+(Compose-Centered $masterIcon 24 24 1.0) | ForEach-Object { Save-Png $_ "$assets\Square44x44Logo.targetsize-24_altform-unplated.png"; $_.Dispose() }
+(Compose-Centered $masterIcon 48 48 1.0) | ForEach-Object { Save-Png $_ "$assets\Square44x44Logo.targetsize-48_altform-lightunplated.png"; $_.Dispose() }
+(Compose-Centered $masterIcon 48 48 1.0) | ForEach-Object { Save-Png $_ "$assets\LockScreenLogo.scale-200.png"; $_.Dispose() }
 
 # --- Wide tile + splash ---
 (Render-Wide 620 300)                          | ForEach-Object { Save-Png $_ "$assets\Wide310x150Logo.scale-200.png"; $_.Dispose() }
