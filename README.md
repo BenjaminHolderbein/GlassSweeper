@@ -2,6 +2,10 @@
 
 A native **Windows** take on Minesweeper, built with **WinUI 3** and a translucent Mica/glass aesthetic. It's the Windows sibling of [SwiftSweeper](https://github.com/BenjaminHolderbein/swiftsweeper) (macOS/SwiftUI) — the game logic is a faithful C# port of that project's `SwiftSweeperKit`.
 
+<p align="center">
+  <img src="media/screenshot.png" alt="GlassSweeper on Windows" width="320">
+</p>
+
 ## Features
 
 - Classic Minesweeper with **first-click safety** (your first tap is always a safe opening — the clicked cell and its 8 neighbors are mine-free).
