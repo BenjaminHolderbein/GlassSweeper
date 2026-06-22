@@ -165,6 +165,7 @@ public sealed partial class MainPage : Page
                     Tag = (r, c),
                 };
                 border.PointerPressed += Cell_PointerPressed;
+                border.PointerReleased += Cell_PointerReleased;
                 Grid.SetRow(border, r);
                 Grid.SetColumn(border, c);
                 BoardHost.Children.Add(border);
@@ -391,6 +392,9 @@ public sealed partial class MainPage : Page
         (int row, int col) = ((int, int))border.Tag;
         Microsoft.UI.Input.PointerPointProperties p = e.GetCurrentPoint(border).Properties;
 
+        // Flagging and middle-click chording act immediately on press. Left-click
+        // mine clearing is deferred to PointerReleased so the player can drag off
+        // the cell to cancel (classic Minesweeper behavior).
         if (p.IsRightButtonPressed)
         {
             ViewModel.Flag(row, col);
@@ -399,16 +403,40 @@ public sealed partial class MainPage : Page
         {
             ViewModel.Chord(row, col);
         }
-        else if (p.IsLeftButtonPressed)
+
+        e.Handled = true;
+
+        // Keep keyboard focus on the board so arrows/space/F keep working
+        // after a mouse click.
+        LayoutRoot.Focus(FocusState.Programmatic);
+    }
+
+    private void Cell_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (ViewModel.IsGameOver)
         {
-            if (ViewModel.Game.Grid[row][col].IsRevealed)
-            {
-                ViewModel.Chord(row, col);
-            }
-            else
-            {
-                ViewModel.Reveal(row, col);
-            }
+            return;
+        }
+
+        var border = (Border)sender;
+        Microsoft.UI.Input.PointerPointProperties p = e.GetCurrentPoint(border).Properties;
+
+        // Only the left button clears mines on release; right/middle already
+        // acted on press.
+        if (p.PointerUpdateKind != Microsoft.UI.Input.PointerUpdateKind.LeftButtonReleased)
+        {
+            return;
+        }
+
+        (int row, int col) = ((int, int))border.Tag;
+
+        if (ViewModel.Game.Grid[row][col].IsRevealed)
+        {
+            ViewModel.Chord(row, col);
+        }
+        else
+        {
+            ViewModel.Reveal(row, col);
         }
 
         e.Handled = true;
