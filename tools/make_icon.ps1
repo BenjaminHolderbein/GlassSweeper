@@ -7,10 +7,10 @@ Add-Type -AssemblyName System.Drawing
 
 $assets = "C:\Users\benja\GlassSweeper\GlassSweeper.App\Assets"
 
-# SwiftSweeper purple gradient (top-left light -> bottom-right dark).
-$purpleHi = [System.Drawing.Color]::FromArgb(255, 92, 36, 150)   # 0.32,0.10,0.55-ish, a touch brighter
-$purpleLo = [System.Drawing.Color]::FromArgb(255, 40, 12, 70)    # 0.18,0.05,0.30-ish
-$poleCol  = [System.Drawing.Color]::FromArgb(255, 238, 234, 246) # cool near-white
+# Neutral gray gradient (top-left light -> bottom-right dark).
+$bgHi = [System.Drawing.Color]::FromArgb(255, 124, 124, 126)  # light gray
+$bgLo = [System.Drawing.Color]::FromArgb(255, 58, 58, 60)     # dark gray
+$poleCol  = [System.Drawing.Color]::FromArgb(255, 245, 245, 248) # near-white
 $flagHi   = [System.Drawing.Color]::FromArgb(255, 255, 107, 107) # #FF6B6B
 $flagLo   = [System.Drawing.Color]::FromArgb(255, 224, 69, 90)   # #E0455A
 
@@ -83,7 +83,7 @@ function Render-Icon([int]$size) {
     $g.SetClip($clip)
 
     $rect = New-Object System.Drawing.Rectangle(0, 0, $size, $size)
-    $grad = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $purpleHi, $purpleLo, [System.Drawing.Drawing2D.LinearGradientMode]::ForwardDiagonal)
+    $grad = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $bgHi, $bgLo, [System.Drawing.Drawing2D.LinearGradientMode]::ForwardDiagonal)
     $g.FillRectangle($grad, $rect)
     $grad.Dispose()
 
@@ -139,7 +139,7 @@ function Render-Wide([int]$w, [int]$h) {
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     Set-Quality $g
     $rect = New-Object System.Drawing.Rectangle(0, 0, $w, $h)
-    $grad = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $purpleHi, $purpleLo, [System.Drawing.Drawing2D.LinearGradientMode]::ForwardDiagonal)
+    $grad = New-Object System.Drawing.Drawing2D.LinearGradientBrush($rect, $bgHi, $bgLo, [System.Drawing.Drawing2D.LinearGradientMode]::ForwardDiagonal)
     $g.FillRectangle($grad, $rect)
     $grad.Dispose()
     $flagMaster = Render-FlagOnly 1024
