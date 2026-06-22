@@ -165,11 +165,14 @@
             </Border>
         </StackPanel>
 
-        <!--  Collapsed result pill (top) — tap to expand  -->
+        <!--  Collapsed result pill — tap to expand. Centered over the HUD row
+              (top pad 12 + top bar 32 + spacing 12 + HUD 40 -> HUD center ~76;
+              a ~34px pill centers there at ~58) so it reads as a status badge
+              instead of colliding with the difficulty/mute row above.  -->
         <Border
             VerticalAlignment="Top"
             HorizontalAlignment="Center"
-            Margin="0,18,0,0"
+            Margin="0,58,0,0"
             Padding="14,7"
             Background="{ThemeResource AccentControlElevationBorderBrush}"
             CornerRadius="{ThemeResource ControlCornerRadius}"
