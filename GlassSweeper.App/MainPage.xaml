@@ -117,6 +117,9 @@
                     Height="40"
                     Padding="0"
                     Click="OnFaceClicked"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
                     CornerRadius="{ThemeResource ControlCornerRadius}"
                     ToolTipService.ToolTip="New game (R)"
                     AutomationProperties.Name="New game">
