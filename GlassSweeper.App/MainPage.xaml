@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:GlassSweeper_App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyboardAcceleratorPlacementMode="Hidden"
     mc:Ignorable="d">
 
     <Page.KeyboardAccelerators>
@@ -23,6 +24,7 @@
         x:Name="LayoutRoot"
         IsTabStop="True"
         KeyDown="OnLayoutKeyDown"
+        KeyboardAcceleratorPlacementMode="Hidden"
         UseSystemFocusVisuals="False">
 
         <!--  Content: top bar + HUD + board, sized to content and centered  -->
