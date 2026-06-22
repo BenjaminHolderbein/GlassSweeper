@@ -165,16 +165,16 @@
             </Border>
         </StackPanel>
 
-        <!--  Collapsed result pill — tap to expand. Centered over the HUD row
-              (top pad 12 + top bar 32 + spacing 12 + HUD 40 -> HUD center ~76;
-              a ~34px pill centers there at ~58) so it reads as a status badge
-              instead of colliding with the difficulty/mute row above.  -->
+        <!--  Collapsed result pill — tap to expand. Sits in line with the
+              difficulty/mute row (top pad 12 + 32px row, centered -> ~11) and
+              uses an opaque accent fill so it cleanly covers the difficulty
+              control it overlaps.  -->
         <Border
             VerticalAlignment="Top"
             HorizontalAlignment="Center"
-            Margin="0,58,0,0"
+            Margin="0,11,0,0"
             Padding="14,7"
-            Background="{ThemeResource AccentControlElevationBorderBrush}"
+            Background="{ThemeResource AccentFillColorDefaultBrush}"
             CornerRadius="{ThemeResource ControlCornerRadius}"
             Tapped="OnPillTapped"
             ToolTipService.ToolTip="Show summary (B)"
