@@ -22,15 +22,17 @@ public sealed partial class MainPage : Page
     private const double CellGap = 2;
     private const double CellStride = CellSize + CellGap;
 
-    private readonly SolidColorBrush _tileBrush = new(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF));
-    private readonly SolidColorBrush _tileBorder = new(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF));
-    private readonly SolidColorBrush _revealedBrush = new(Color.FromArgb(0x73, 0x00, 0x00, 0x00));
-    private readonly SolidColorBrush _explodedBrush = new(Color.FromArgb(0x99, 0xE0, 0x55, 0x61));
-    private readonly SolidColorBrush _defaultText = new(Color.FromArgb(0xFF, 0xF2, 0xF4, 0xF8));
-    private readonly SolidColorBrush _questionBrush = new(Color.FromArgb(0xFF, 0xF0, 0xC0, 0x60));
+    // Cell colors are re-assigned per theme by ApplyTheme(); only _transparent
+    // and _focusBrush (accent) are theme-independent.
+    private SolidColorBrush _tileBrush = null!;
+    private SolidColorBrush _tileBorder = null!;
+    private SolidColorBrush _revealedBrush = null!;
+    private SolidColorBrush _explodedBrush = null!;
+    private SolidColorBrush _defaultText = null!;
+    private SolidColorBrush _questionBrush = null!;
     private readonly SolidColorBrush _transparent = new(Color.FromArgb(0x00, 0x00, 0x00, 0x00));
-    private readonly Brush _focusBrush;
-    private readonly SolidColorBrush[] _numberBrushes;
+    private Brush _focusBrush = null!;
+    private SolidColorBrush[] _numberBrushes = null!;
 
     private Border[,]? _cells;
     private int _focusedRow;
@@ -41,20 +43,9 @@ public sealed partial class MainPage : Page
     {
         InitializeComponent();
 
-        // SwiftSweeper's dark-mode number palette (index 1..8).
-        _numberBrushes = new SolidColorBrush[9];
-        _numberBrushes[1] = Rgb(0.40, 0.64, 1.00);
-        _numberBrushes[2] = Rgb(0.30, 0.82, 0.35);
-        _numberBrushes[3] = Rgb(1.00, 0.30, 0.30);
-        _numberBrushes[4] = Rgb(0.20, 0.40, 0.85);
-        _numberBrushes[5] = Rgb(0.67, 0.27, 0.27);
-        _numberBrushes[6] = Rgb(0.30, 0.82, 0.82);
-        _numberBrushes[7] = Rgb(1.00, 1.00, 1.00);
-        _numberBrushes[8] = Rgb(0.55, 0.55, 0.55);
-
-        _focusBrush = Application.Current.Resources.TryGetValue("AccentFillColorDefaultBrush", out object? b) && b is Brush accent
-            ? accent
-            : new SolidColorBrush(Color.FromArgb(0xFF, 0x5B, 0x8C, 0xFF));
+        // Cell colors track the system light/dark theme, mirroring SwiftSweeper.
+        ApplyTheme();
+        ActualThemeChanged += OnActualThemeChanged;
 
         ViewModel.BoardReset += (_, _) => BuildBoard();
         ViewModel.BoardChanged += (_, _) => RefreshBoard();
@@ -70,6 +61,64 @@ public sealed partial class MainPage : Page
 
     private static SolidColorBrush Rgb(double r, double g, double b) =>
         new(Color.FromArgb(0xFF, (byte)(r * 255), (byte)(g * 255), (byte)(b * 255)));
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args)
+    {
+        ApplyTheme();
+        RefreshBoard();
+    }
+
+    /// <summary>
+    /// Sets the cell palette for the current theme, mirroring SwiftSweeper:
+    /// light mode uses the classic Windows Minesweeper number RGBs on a silver
+    /// revealed cell; dark mode uses the lifted palette on a dark glassy cell.
+    /// </summary>
+    private void ApplyTheme()
+    {
+        _numberBrushes = new SolidColorBrush[9];
+        if (ActualTheme == ElementTheme.Light)
+        {
+            // Classic Windows Minesweeper number colors.
+            _numberBrushes[1] = Rgb(0.00, 0.00, 1.00);
+            _numberBrushes[2] = Rgb(0.00, 0.50, 0.00);
+            _numberBrushes[3] = Rgb(1.00, 0.00, 0.00);
+            _numberBrushes[4] = Rgb(0.00, 0.00, 0.50);
+            _numberBrushes[5] = Rgb(0.50, 0.00, 0.00);
+            _numberBrushes[6] = Rgb(0.00, 0.50, 0.50);
+            _numberBrushes[7] = Rgb(0.00, 0.00, 0.00);
+            _numberBrushes[8] = Rgb(0.50, 0.50, 0.50);
+
+            _tileBrush = Rgb(0.91, 0.91, 0.93);                       // raised light cell
+            _tileBorder = new(Color.FromArgb(0x24, 0x00, 0x00, 0x00));
+            _revealedBrush = Rgb(0.66, 0.66, 0.68);                   // classic silver gray
+            _explodedBrush = Rgb(0.88, 0.33, 0.38);
+            _defaultText = Rgb(0.13, 0.13, 0.15);
+            _questionBrush = Rgb(0.62, 0.40, 0.00);
+        }
+        else
+        {
+            // SwiftSweeper's lifted dark palette (pairs 1/4 and 3/5 share hue).
+            _numberBrushes[1] = Rgb(0.40, 0.64, 1.00);
+            _numberBrushes[2] = Rgb(0.30, 0.82, 0.35);
+            _numberBrushes[3] = Rgb(1.00, 0.30, 0.30);
+            _numberBrushes[4] = Rgb(0.20, 0.40, 0.85);
+            _numberBrushes[5] = Rgb(0.67, 0.27, 0.27);
+            _numberBrushes[6] = Rgb(0.30, 0.82, 0.82);
+            _numberBrushes[7] = Rgb(1.00, 1.00, 1.00);
+            _numberBrushes[8] = Rgb(0.55, 0.55, 0.55);
+
+            _tileBrush = new(Color.FromArgb(0x2E, 0xFF, 0xFF, 0xFF));
+            _tileBorder = new(Color.FromArgb(0x40, 0xFF, 0xFF, 0xFF));
+            _revealedBrush = new(Color.FromArgb(0x73, 0x00, 0x00, 0x00));
+            _explodedBrush = new(Color.FromArgb(0x99, 0xE0, 0x55, 0x61));
+            _defaultText = new(Color.FromArgb(0xFF, 0xF2, 0xF4, 0xF8));
+            _questionBrush = new(Color.FromArgb(0xFF, 0xF0, 0xC0, 0x60));
+        }
+
+        _focusBrush = Application.Current.Resources.TryGetValue("AccentFillColorDefaultBrush", out object? b) && b is Brush accent
+            ? accent
+            : new SolidColorBrush(Color.FromArgb(0xFF, 0x5B, 0x8C, 0xFF));
+    }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
