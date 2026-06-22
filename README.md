@@ -24,6 +24,28 @@ A native **Windows** take on Minesweeper, built with **WinUI 3** and a transluce
 | Chord (reveal neighbors) | Left-click a satisfied number, or middle-click |
 | New game | Click the face button, or "Play again" |
 
+## Install
+
+GlassSweeper ships as a signed, self-contained **MSIX** package. Once installed it
+behaves like any other Windows app — it lives in the **Start menu** with its icon,
+launches with a click, and uninstalls from **Settings → Apps** the normal way. The
+.NET and Windows App SDK runtimes are bundled, so there's nothing else to install.
+
+1. **Get the package.** Build it with the steps in [PACKAGING.md](PACKAGING.md) (or,
+   if a prebuilt [release](https://github.com/BenjaminHolderbein/GlassSweeper/releases)
+   is available, download its package folder). Either way you end up with a folder
+   containing the `.msix`, a `.cer` certificate, and `Install.ps1`.
+2. **Install.** In that folder, open an **elevated** PowerShell and run:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\Install.ps1
+   ```
+   This trusts the bundled (self-signed) certificate once, then installs the app.
+3. **Play.** Launch **GlassSweeper** from the Start menu. To remove it later,
+   right-click it in Start → Uninstall, or use **Settings → Apps → Installed apps**.
+
+> Requires Windows 10 1809 (build 17763) or later. No prerequisites — the runtimes
+> are bundled in the package.
+
 ## Project structure
 
 | Project | Purpose |
@@ -32,13 +54,13 @@ A native **Windows** take on Minesweeper, built with **WinUI 3** and a transluce
 | `GlassSweeper.App` | WinUI 3 (Windows App SDK) packaged desktop app — board rendering, HUD, input, MVVM presentation layer. |
 | `GlassSweeper.Tests` | xUnit suite (20 tests) covering board generation, reveal cascade, flagging, chording, win/loss, and custom-board clamping. |
 
-## Requirements
+## Build & run from source
+
+For development you'll need:
 
 - Windows 10 1809 (build 17763) or later
 - [.NET 9 SDK](https://dotnet.microsoft.com/download) with the Windows App SDK workload (or Visual Studio 2022 with the **Windows App SDK C# Templates** component)
-- **Developer Mode** enabled to run a locally-built (unsigned) MSIX package
-
-## Build & run
+- **Developer Mode** enabled to run a locally-built (unsigned) packaged app
 
 ```powershell
 # Restore & build
@@ -53,6 +75,8 @@ dotnet run --project GlassSweeper.App --launch-profile "GlassSweeper.App (Packag
 # Run the tests
 dotnet test
 ```
+
+To produce the installable signed MSIX, see [PACKAGING.md](PACKAGING.md).
 
 ## Tech stack
 
