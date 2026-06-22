@@ -61,24 +61,38 @@ public static class SettingsService
     }
 }
 
-/// <summary>Win/loss feedback sounds, mirroring SwiftSweeper's chimes.</summary>
+/// <summary>
+/// Win/loss feedback sounds. Plays bundled Windows .wav clips (chimes = win,
+/// chord = loss) fire-and-forget via the winmm PlaySound API. Mute is gated by
+/// the caller (the view model only calls these when unmuted).
+/// </summary>
 internal static class Sound
 {
-    private const uint MbIconAsterisk = 0x00000040; // pleasant chime — win
-    private const uint MbIconHand = 0x00000010;      // error tone — loss
+    private const uint SndAsync = 0x0001;      // play asynchronously, return immediately
+    private const uint SndFilename = 0x00020000; // pszSound is a file path
+    private const uint SndNoDefault = 0x0002;    // don't fall back to the default beep if missing
 
-    [DllImport("user32.dll")]
-    private static extern bool MessageBeep(uint uType);
+    [DllImport("winmm.dll", CharSet = CharSet.Unicode)]
+    private static extern bool PlaySound(string? pszSound, IntPtr hmod, uint fdwSound);
 
-    public static void Win() => Beep(MbIconAsterisk);
+    private static readonly string WinSound = AssetPath("chimes.wav");
+    private static readonly string LossSound = AssetPath("chord.wav");
 
-    public static void Loss() => Beep(MbIconHand);
+    public static void Win() => Play(WinSound);
 
-    private static void Beep(uint type)
+    public static void Loss() => Play(LossSound);
+
+    private static string AssetPath(string file) =>
+        Path.Combine(AppContext.BaseDirectory, "Assets", file);
+
+    private static void Play(string path)
     {
         try
         {
-            MessageBeep(type);
+            if (File.Exists(path))
+            {
+                PlaySound(path, IntPtr.Zero, SndFilename | SndAsync | SndNoDefault);
+            }
         }
         catch
         {
